@@ -1,0 +1,14 @@
+tags
+TAGS
+dist/
+\#*#
+*~
+*.aux
+*.hp
+*.hi
+*.o
+*.prof
+*.ps
+*.swp
+cabal-dev
+.DS_Store

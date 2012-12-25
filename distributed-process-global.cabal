@@ -1,0 +1,75 @@
+Name:          distributed-process-global
+Version:       0.1.0.0
+Cabal-Version: >=1.8
+Build-Type:    Simple
+License:       BSD3
+License-File:  LICENSE
+Copyright:     Parallel Scientific, Inc
+Author:        Jeff Epstein <jeff.epstein@parsci.com>
+Maintainer:    Jeff Epstein <jeff.epstein@parsci.com>
+Stability:     experimental
+Homepage:      http://github.com/jepst/distributed-process-global
+Bug-Reports:   mailto:jeff.epstein@parsci.com
+Synopsis:      Distributed locks, RPC, and global registration for Cloud Haskell
+Description:   A port of Erlang's global module. Provides services for
+               synchronization between nodes. In particular, we provide the notion
+               of cluster, a fully-connected network of nodes that can synchronously
+               share data. Nodes entering the cluster are also added synchronously, so
+               that all members have a consistent view. Distributed locks and distributed
+               process registration are also available. Finally, we provide a version of
+               reliable RPC, analogous to Erlang's gen_server.
+Tested-With:   GHC==7.4.2
+Category:      Control 
+
+Source-Repository head
+  Type:     git
+  Location: http://github.com/jepst/distributed-process-global
+
+Library
+  Build-Depends:     base >= 4.4 && < 5,
+                     binary >= 0.5 && < 0.7,
+                     network-transport >= 0.3 && < 0.4,
+                     stm >= 2.3 && < 2.5,
+                     transformers >= 0.2 && < 0.4,
+                     mtl >= 2.0 && < 2.2,
+                     data-accessor >= 0.2 && < 0.3,
+                     bytestring >= 0.9 && < 0.11,
+                     containers >= 0.4 && < 0.6,
+                     old-locale >= 1.0 && < 1.1,
+                     time >= 1.2 && < 1.5,
+                     random >= 1.0 && < 1.1,
+                     ghc-prim >= 0.2 && < 0.4,
+                     distributed-static >= 0.2 && < 0.3,
+                     rank1dynamic >= 0.1 && < 0.2,
+                     syb >= 0.3 && < 0.4,
+                     distributed-process >= 0.4.1
+  Exposed-modules:   Control.Distributed.Process.Global,
+                     Control.Distributed.Process.Global.Call,
+                     Control.Distributed.Process.Global.Types,
+                     Control.Distributed.Process.Global.Server,
+                     Control.Distributed.Process.Global.Merge,
+                     Control.Distributed.Process.Global.Util
+  Extensions:        
+  ghc-options:       -Wall
+  HS-Source-Dirs:    src
+
+Test-Suite TestGlobal
+  Type:              exitcode-stdio-1.0
+  Main-Is:           TestGlobal.hs
+  Build-Depends:     base >= 4.4 && < 5,
+                     random >= 1.0 && < 1.1,
+                     ansi-terminal >= 0.5 && < 0.6,
+                     distributed-static >= 0.2 && < 0.3,
+                     distributed-process >= 0.4.1,
+                     network-transport >= 0.3 && < 0.4,
+                     network-transport-tcp >= 0.3 && < 0.4,
+                     bytestring >= 0.9 && < 0.11,
+                     network >= 2.3 && < 2.5,
+                     HUnit >= 1.2 && < 1.3,
+                     test-framework >= 0.6 && < 0.7,
+                     test-framework-hunit >= 0.2 && < 0.3,
+                     distributed-process-global
+  Extensions:        
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N -fno-warn-unused-do-bind 
+  HS-Source-Dirs:    tests 
+
