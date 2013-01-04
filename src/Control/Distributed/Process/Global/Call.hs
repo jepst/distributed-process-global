@@ -59,7 +59,7 @@ multicall nodes msg tag time =
          matchIf (\(MulticallResponse,mtag,_) -> mtag == tag)
                  (\(MulticallResponse,_,val) -> return val),
          matchIf (\(ProcessMonitorNotification ref _pid reason) -> ref == mon_reciever && reason /= DiedNormal)
-                 (\_ -> return [])
+                 (\_ -> error "multicall: unexpected termination of worker process")
        ]
    where
          recv nodes monitortags mon_caller = 

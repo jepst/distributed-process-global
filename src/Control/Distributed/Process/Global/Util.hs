@@ -11,7 +11,6 @@ module Control.Distributed.Process.Global.Util
 
   , partitionByDifference
   , unionWithKeyM
-  , linkOnFailure
   , mention
   , choose
   , goodResponse
@@ -118,21 +117,6 @@ unionWithKeyM f a b =
                  case ret of
                    Nothing -> go (M.delete key themap) xs
                    Just newval -> go (M.insert key newval themap) xs
-
--- | CH's 'link' primitive, unlike Erlang's, will trigger when the target process
--- dies for any reason. linkOnFailure has semantics like Erlang's: it will trigger
--- only when the target function dies abnormally.
-linkOnFailure :: ProcessId -> Process ()
-linkOnFailure them = do
-  us <- getSelfPid
-  tid <- liftIO $ myThreadId
-  void $ spawnLocal $ do
-    link us
-    _ <- monitor them
-    ProcessMonitorNotification _ pid reason <- expect
-    case reason of
-      DiedNormal -> return ()
-      _ -> liftIO $ throwTo tid (ProcessLinkException pid reason)
 
 mention :: a -> b -> b
 mention _a b = b
