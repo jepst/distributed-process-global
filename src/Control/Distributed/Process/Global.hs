@@ -24,44 +24,18 @@ module Control.Distributed.Process.Global
   , getKnown
   , getKnownNameServers
 
-  -- * Tags
-  , Tag
-  , TagPool
-  , newTagPool
-  , getTag
-
-  -- * Timeouts
-  , Timeout
-  , infiniteWait
-  , noWait
-
-  -- * Procedure calls
-  , callAt
-  , callTimeout
-  , multicall
-  , callResponse
-  , callResponseIf
-  , callResponseDefer
-  , callResponseDeferIf
-  , callForward
-  , callResponseAsync
-
-  -- * Server calls
-  , whereisOrStart
-  , whereisOrStartRemote
-
   -- * Remote call table
   , __remoteTable
   ) where
 
 import Control.Distributed.Process
 import Control.Distributed.Process.Global.Types
-import Control.Distributed.Process.Global.Call
-import Control.Distributed.Process.Global.Util hiding (__remoteTable)
-import qualified Control.Distributed.Process.Global.Util (__remoteTable)
 import Control.Distributed.Process.Global.Server hiding (__remoteTable)
 import qualified Control.Distributed.Process.Global.Server (__remoteTable)
-import Control.Distributed.Process.Global.Merge 
+import Control.Distributed.Process.Global.Merge
+
+import Control.Distributed.Process.Platform hiding (__remoteTable)
+import qualified Control.Distributed.Process.Platform (__remoteTable)
 
 ----------------------------------------------
 -- * Remote table
@@ -70,6 +44,4 @@ import Control.Distributed.Process.Global.Merge
 __remoteTable :: RemoteTable -> RemoteTable
 __remoteTable = 
    Control.Distributed.Process.Global.Server.__remoteTable .
-   Control.Distributed.Process.Global.Util.__remoteTable
-
-
+   Control.Distributed.Process.Platform.__remoteTable

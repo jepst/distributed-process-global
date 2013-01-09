@@ -3,10 +3,6 @@ module Control.Distributed.Process.Global.Util
   ( newTagPool
   , getTag
 
-  , timeout
-  , infiniteWait
-  , noWait
-
   , randomSleep
 
   , partitionByDifference
@@ -18,11 +14,6 @@ module Control.Distributed.Process.Global.Util
   , showExceptions
   , ensureResult
   , UnexpectedConnectionFailure(..)
-  
-  , whereisOrStart
-  , whereisOrStartRemote
-  
-  , __remoteTable
   ) where
 
 import Data.Typeable (Typeable)
@@ -32,6 +23,7 @@ import Control.Distributed.Process
 import Control.Distributed.Process.Internal.Closure.BuiltIn (seqCP)
 import Control.Distributed.Process.Closure (remotable, mkClosure)
 import Control.Distributed.Process.Serializable (Serializable)
+import Control.Distributed.Process.Platform
 import Control.Exception (throwIO, SomeException, Exception)
 import Prelude hiding (catch)
 import Control.Monad (void)
@@ -42,33 +34,8 @@ import Data.Bits (shiftL)
 import qualified Data.Map as M
 
 ----------------------------------------------
--- * Tags
-----------------------------------------------
-
--- | Create a new per-process source of unique
--- message identifiers.
-newTagPool :: Process TagPool
-newTagPool = liftIO $ newMVar 0
-
--- | Extract a new identifier from a 'TagPool'.
-getTag :: TagPool -> Process Tag
-getTag tp = liftIO $ modifyMVar tp (\tag -> return (tag+1,tag))
-
-----------------------------------------------
 -- * Timeouts
 ----------------------------------------------
-
-infiniteWait :: Timeout
-infiniteWait = Nothing
-
-noWait :: Timeout
-noWait = Just 0
-
-timeout :: Int -> Tag -> ProcessId -> Process ()
-timeout time tag p =
-  void $ spawnLocal $ 
-               do liftIO $ threadDelay time
-                  send p (TimeoutNotification tag)
 
 -- | Delay a random amount of time, which grows as we encounter more failures
 randomSleep :: Int -> IO ()
@@ -127,14 +94,6 @@ choose [] = return Nothing
 choose lst = do n <- randomRIO (0, length lst - 1)
                 return $ Just $ lst !! n
 
--- | An alternative to 'matchIf' that allows both predicate and action
--- to be expressed in one parameter.
-matchCond :: (Serializable a) => (a -> Maybe (Process b)) -> Match b
-matchCond cond = 
-   let v n = (isJust n, fromJust n)
-       res = v . cond
-    in matchIf (fst . res) (snd . res)
-
 showExceptions :: Process a -> Process a
 showExceptions proc =
   proc `catch` (\a -> do say $ show (a::SomeException)
@@ -155,91 +114,4 @@ goodResponse :: [Maybe Bool] -> Bool
 goodResponse [] = True
 goodResponse (Just True : xs) = goodResponse xs
 goodResponse _ = False
-
-
-----------------------------------------------
--- * Generic servers
-----------------------------------------------
-
--- | Returns the pid of the process that has been registered 
--- under the given name. This refers to a local, per-node registration,
--- not global registration. If that name is unregistered, a process
--- is started. This is a handy way to start per-node named servers.
-whereisOrStart :: String -> Process () -> Process ProcessId
-whereisOrStart name proc =
-  do mpid <- whereis name
-     case mpid of
-       Just pid -> return pid
-       Nothing -> 
-         do caller <- getSelfPid
-            pid <- spawnLocal $ 
-                 do self <- getSelfPid
-                    register name self
-                    send caller (RegisterSelf,self)
-                    () <- expect
-                    proc
-            ref <- monitor pid
-            ret <- receiveWait
-               [ matchIf (\(ProcessMonitorNotification aref _ _) -> ref == aref)
-                         (\(ProcessMonitorNotification _ _ _) -> return Nothing),
-                 matchIf (\(RegisterSelf,apid) -> apid == pid)
-                         (\(RegisterSelf,_) -> return $ Just pid)
-               ]
-            case ret of
-              Nothing -> whereisOrStart name proc
-              Just somepid -> 
-                do unmonitor ref
-                   send somepid ()
-                   return somepid
-
-registerSelf :: (String, ProcessId) -> Process ()
-registerSelf (name,target) =
-  do self <- getSelfPid
-     register name self
-     send target (RegisterSelf, self)
-     () <- expect
-     return ()
-
-$(remotable ['registerSelf])
-
--- | A remote equivalent of 'whereisOrStart'. It deals with the
--- node registry on the given node, and the process, if it needs to be started,
--- will run on that node. If the node is inaccessible, Nothing will be returned.
-whereisOrStartRemote :: NodeId -> String -> Closure (Process ()) -> Process (Maybe ProcessId)
-whereisOrStartRemote nid name proc =
-     do mRef <- monitorNode nid
-        whereisRemoteAsync nid name
-        res <- receiveWait 
-          [ matchIf (\(WhereIsReply label _) -> label == name)
-                    (\(WhereIsReply _ mPid) -> return (Just mPid)),
-            matchIf (\(NodeMonitorNotification aref _ _) -> aref == mRef)
-                    (\(NodeMonitorNotification _ _ _) -> return Nothing)
-          ]
-        case res of
-           Nothing -> return Nothing
-           Just (Just pid) -> unmonitor mRef >> return (Just pid)
-           Just Nothing -> 
-              do self <- getSelfPid
-                 sRef <- spawnAsync nid ($(mkClosure 'registerSelf) (name,self) `seqCP` proc)    
-                 ret <- receiveWait [
-                      matchIf (\(NodeMonitorNotification ref _ _) -> ref == mRef)
-                              (\(NodeMonitorNotification _ _ _) -> return Nothing),
-                      matchIf (\(DidSpawn ref _) -> ref==sRef )
-                              (\(DidSpawn _ pid) -> 
-                                  do pRef <- monitor pid
-                                     receiveWait
-                                       [ matchIf (\(RegisterSelf, apid) -> apid == pid)
-                                                 (\(RegisterSelf, _) -> do unmonitor pRef
-                                                                           send pid ()
-                                                                           return $ Just pid),
-                                         matchIf (\(NodeMonitorNotification aref _ _) -> aref == mRef)
-                                                 (\(NodeMonitorNotification _aref _ _) -> return Nothing),
-                                         matchIf (\(ProcessMonitorNotification ref _ _) -> ref==pRef)
-                                                 (\(ProcessMonitorNotification _ _ _) -> return Nothing)
-                                       ] )
-                      ]
-                 unmonitor mRef
-                 case ret of
-                   Nothing -> whereisOrStartRemote nid name proc
-                   Just pid -> return $ Just pid 
 
