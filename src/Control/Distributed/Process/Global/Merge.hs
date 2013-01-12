@@ -6,7 +6,10 @@ import Control.Distributed.Process
 import Control.Distributed.Process.Global.Types
 import Control.Distributed.Process.Global.Util
 import Control.Distributed.Process.Global.Server
-import Control.Distributed.Process.Global.Call
+
+import Control.Distributed.Process.Platform
+import Control.Distributed.Process.Platform.Call
+import Control.Distributed.Process.Platform.Time
 
 import Data.List (nub, union)
 import qualified Data.Map as M

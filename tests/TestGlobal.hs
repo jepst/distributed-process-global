@@ -5,6 +5,11 @@ import Control.Distributed.Process.Node
 import Control.Distributed.Process.Global
 import Control.Distributed.Process.Global.Util (mention)
 
+import Control.Distributed.Process.Platform hiding (__remoteTable)
+import Control.Distributed.Process.Platform.Call
+import Control.Distributed.Process.Platform.Test
+import Control.Distributed.Process.Platform.Time
+
 import Control.Exception (SomeException)
 import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay, myThreadId, throwTo)
@@ -20,16 +25,6 @@ import Test.Framework.Providers.HUnit (testCase)
 
 myRemoteTable :: RemoteTable
 myRemoteTable = Control.Distributed.Process.Global.__remoteTable initRemoteTable
-
-tryRunProcess :: LocalNode -> Process () -> IO ()
-tryRunProcess node p = do
-  tid <- liftIO myThreadId
-  runProcess node $ catch p (\e -> liftIO $ throwTo tid (e::SomeException))
-
-tryForkProcess :: LocalNode -> Process () -> IO ProcessId
-tryForkProcess node p = do
-  tid <- liftIO myThreadId
-  forkProcess node $ catch p (\e -> liftIO $ throwTo tid (e::SomeException))
 
 multicallTest :: Transport -> Assertion
 multicallTest transport =

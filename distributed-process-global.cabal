@@ -30,9 +30,9 @@ Library
                      binary >= 0.5 && < 0.7,
                      containers >= 0.4 && < 0.6,
                      random >= 1.0 && < 1.1,
-                     distributed-process >= 0.4.1
+                     distributed-process >= 0.4.1,
+                     distributed-process-platform >= 0.1.0
   Exposed-modules:   Control.Distributed.Process.Global,
-                     Control.Distributed.Process.Global.Call,
                      Control.Distributed.Process.Global.Types,
                      Control.Distributed.Process.Global.Server,
                      Control.Distributed.Process.Global.Merge,
@@ -48,6 +48,7 @@ Test-Suite TestGlobal
                      random >= 1.0 && < 1.1,
                      ansi-terminal >= 0.5 && < 0.6,
                      distributed-process >= 0.4.1,
+                     distributed-process-platform >= 0.1.0,
                      network-transport >= 0.3 && < 0.4,
                      network-transport-tcp >= 0.3 && < 0.4,
                      bytestring >= 0.9 && < 0.11,
