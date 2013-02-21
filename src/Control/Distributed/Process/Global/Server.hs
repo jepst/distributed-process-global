@@ -24,8 +24,11 @@ module Control.Distributed.Process.Global.Server
 import Control.Distributed.Process
 import Control.Distributed.Process.Closure (mkClosure,remotable)
 import Control.Distributed.Process.Global.Types
-import Control.Distributed.Process.Global.Util hiding (__remoteTable)
-import Control.Distributed.Process.Global.Call
+import Control.Distributed.Process.Global.Util
+
+import Control.Distributed.Process.Platform hiding (__remoteTable)
+import Control.Distributed.Process.Platform.Call
+import Control.Distributed.Process.Platform.Time
 
 import Control.Applicative ((<$>))
 import Data.List (find, delete, sort, (\\))

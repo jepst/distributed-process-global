@@ -1,12 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module Control.Distributed.Process.Global.Types
-  ( Timeout
-  , TimeoutNotification(..)
-  
-  , Tag
-  , TagPool
-
-  , LockName
+  ( LockName
   , LockId
   , LockRequesterId
 
@@ -36,39 +30,10 @@ module Control.Distributed.Process.Global.Types
 import Control.Applicative ((<$>),(<*>))
 import qualified Data.Map as M (Map)
 import Control.Distributed.Process (MonitorRef, ProcessId)
+import Control.Distributed.Process.Platform
 import Control.Concurrent.MVar (MVar)
 import Data.Binary (Binary,get,put,putWord8,getWord8)
 import Data.Typeable (Typeable)
-
-----------------------------------------------
--- * Timeouts
-----------------------------------------------
-
--- | A period of time to wait, or Nothing for
--- infinite waiting.
-type Timeout = Maybe Int
-
--- | Send to a process when a timeout expires.
-data TimeoutNotification = TimeoutNotification Tag
-       deriving (Typeable)
-instance Binary TimeoutNotification where
-       get = fmap TimeoutNotification $ get
-       put (TimeoutNotification n) = put n
-
-----------------------------------------------
--- * Tags
-----------------------------------------------
-
--- | Tags provide uniqueness for messages, so that they can be
--- matched with their response.
-type Tag = Int
-
--- | Generates unique 'Tag' for messages and response pairs.
--- Each process that depends, directly or indirectly, on
--- the call mechanisms in "Control.Distributed.Process.Global.Call"
--- should have at most one TagPool on which to draw unique message
--- tags.
-type TagPool = MVar Tag
 
 ----------------------------------------------
 -- * Global name server messages
